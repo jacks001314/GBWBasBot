@@ -1,7 +1,7 @@
 package tcp
 
 const (
-	tcpModName           = "tcp"
+	TCPModName           = "tcp"
 	tcpConnectionUDName  = "tcp.connection"
 	tcpConnectionApiName = "tcp.connApi"
 	newConnectionMethod  = "newConnection"

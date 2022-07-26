@@ -231,7 +231,7 @@ var moduleMap objects.Object = &objects.ImmutableMap{
 func (HttpTengo) Import(moduleName string) (interface{}, error) {
 
 	switch moduleName {
-	case httpModuleName:
+	case HTTPModuleName:
 		return moduleMap, nil
 	default:
 		return nil, errors.New("undefined module" + moduleName)

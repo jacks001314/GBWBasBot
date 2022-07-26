@@ -1,6 +1,8 @@
 package detect
 
 import (
+	"common/proto/http"
+	"common/proto/tcp"
 	luahelper "common/scripts/lua"
 
 	glua "github.com/yuin/gopher-lua"
@@ -14,7 +16,7 @@ type DLuaScript struct {
 }
 
 //从内存加载编译lua探测脚本
-func LoadLuaScript(content []byte, key string) (*DLuaScript, error) {
+func LoadLuaScriptFromContent(content []byte, key string) (*DLuaScript, error) {
 
 	bcode, err := luahelper.CompileLuaScript(content, key)
 
@@ -46,8 +48,22 @@ func LoadLuaScriptFromFile(fpath string, key string) (*DLuaScript, error) {
 
 }
 
+//运行lua探测脚本
 func (dl *DLuaScript) Run(target *DTarget) error {
 
+	L := glua.NewState()
+	defer L.Close()
+
+	luahelper.RegisterModule(L, http.HTTPModuleName, http.Loader)
+	luahelper.RegisterModule(L, tcp.TCPModName, tcp.Loader)
+	luahelper.RegisterModule(L, DetectModuleName, NewDetectLuaModule(dl, target).Loader)
+
+	if err := luahelper.RunLua(L, dl.bcode); err != nil {
+
+		return err
+	}
+
+	return nil
 }
 
 func (dl *DLuaScript) Publish(result *DResult) {

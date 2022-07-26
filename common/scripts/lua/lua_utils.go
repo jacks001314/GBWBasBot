@@ -12,6 +12,10 @@ const (
 	MTIndexName = "__index"
 )
 
+func RegisterModule(L *glua.LState, name string, loader glua.LGFunction) {
+	L.PreloadModule(name, loader)
+}
+
 func RegisterApis(L *glua.LState, module *glua.LTable,
 	apis map[string]glua.LGFunction,
 	fkey, udname string) {
@@ -23,12 +27,37 @@ func RegisterApis(L *glua.LState, module *glua.LTable,
 
 }
 
+func RegisterUserData(L *glua.LState, module *glua.LTable, udname string, userdata interface{},
+	apis map[string]glua.LGFunction) {
+
+	mt := L.NewTypeMetatable(udname)
+	// methods
+	L.SetField(mt, MTIndexName, L.SetFuncs(L.NewTable(), apis))
+	ud := L.NewUserData()
+	ud.Value = userdata
+	L.SetMetatable(ud, mt)
+
+	L.SetField(module, udname, ud)
+}
+
 func SetUserData(L *glua.LState, name string, udata interface{}) {
 
 	ud := L.NewUserData()
 	ud.Value = udata
 	L.SetMetatable(ud, L.GetTypeMetatable(name))
 	L.Push(ud)
+}
+
+func RegisterGlobalType(L *glua.LState, name string, userdata interface{},
+	apis map[string]glua.LGFunction) {
+
+	mt := L.NewTypeMetatable(name)
+	// methods
+	L.SetField(mt, MTIndexName, L.SetFuncs(L.NewTable(), apis))
+	ud := L.NewUserData()
+	ud.Value = userdata
+	L.SetMetatable(ud, mt)
+	L.SetGlobal(name, ud)
 }
 
 func LuaTableToStringArray(t *glua.LTable) []string {

@@ -374,7 +374,7 @@ var moduleMap objects.Object = &objects.ImmutableMap{
 func (TCPTengo) Import(moduleName string) (interface{}, error) {
 
 	switch moduleName {
-	case tcpModName:
+	case TCPModName:
 		return moduleMap, nil
 	default:
 		return nil, errors.New("undefined module:" + moduleName)

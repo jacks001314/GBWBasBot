@@ -1,7 +1,7 @@
 package http
 
 const (
-	httpModuleName      = "http"
+	HTTPModuleName      = "http"
 	httpClientUDName    = "http.udclient"
 	httpClientApiName   = "http.clientApis"
 	httpRequestUDName   = "http.udreq"
