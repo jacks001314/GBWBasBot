@@ -45,7 +45,7 @@ func scriptCompile(sdata []byte) (*script.Compiled, error) {
 	return script.Compile()
 }
 
-func LoadTengoScriptFromContent(key string, data []byte) (*DetectTengoScript, error) {
+func LoadTengoScriptFromContent(data []byte, key string) (*DetectTengoScript, error) {
 
 	com, err := scriptCompile(data)
 
@@ -70,7 +70,7 @@ func LoadTengoScriptFromFile(fpath, key string) (*DetectTengoScript, error) {
 		return nil, err
 	}
 
-	return LoadTengoScriptFromContent(key, data)
+	return LoadTengoScriptFromContent(data, key)
 
 }
 

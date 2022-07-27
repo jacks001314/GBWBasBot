@@ -48,6 +48,33 @@ func SetUserData(L *glua.LState, name string, udata interface{}) {
 	L.Push(ud)
 }
 
+func GetGlobalUserData(L *glua.LState, name string) *glua.LUserData {
+
+	v := L.GetGlobal(name)
+
+	if v == glua.LNil {
+
+		return nil
+	}
+
+	if lv, ok := v.(*glua.LUserData); ok {
+		return lv
+	}
+
+	return nil
+}
+
+func SetGlobalUserData(L *glua.LState, name string, userdata interface{}) {
+
+	ud := GetGlobalUserData(L, name)
+
+	if ud != nil {
+
+		ud.Value = userdata
+	}
+
+}
+
 func RegisterGlobalType(L *glua.LState, name string, userdata interface{},
 	apis map[string]glua.LGFunction) {
 
@@ -58,6 +85,7 @@ func RegisterGlobalType(L *glua.LState, name string, userdata interface{},
 	ud.Value = userdata
 	L.SetMetatable(ud, mt)
 	L.SetGlobal(name, ud)
+
 }
 
 func LuaTableToStringArray(t *glua.LTable) []string {

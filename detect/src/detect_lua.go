@@ -4,12 +4,32 @@ import (
 	"common/proto/http"
 	"common/proto/tcp"
 	luahelper "common/scripts/lua"
+	"fmt"
+	"sync"
 
 	glua "github.com/yuin/gopher-lua"
 )
 
+var lpool = sync.Pool{
+
+	New: func() interface{} {
+
+		L := glua.NewState()
+
+		luahelper.RegisterModule(L, http.HTTPModuleName, http.Loader)
+		luahelper.RegisterModule(L, tcp.TCPModName, tcp.Loader)
+		luahelper.RegisterModule(L, DetectModuleName, Loader)
+		luahelper.RegisterGlobalType(L, detectScriptUDName, nil, detectScriptApis)
+		luahelper.RegisterGlobalType(L, detectTargetUDName, nil, dtargetApis)
+
+		return L
+	},
+}
+
 //对应一个lua探测脚本，要实现detect接口
 type DLuaScript struct {
+	task *DTask
+
 	Key   string              //脚本key,用来唯一的标识一个脚本
 	bcode *glua.FunctionProto //lua探测脚本编译字节码
 
@@ -51,12 +71,13 @@ func LoadLuaScriptFromFile(fpath string, key string) (*DLuaScript, error) {
 //运行lua探测脚本
 func (dl *DLuaScript) Run(target *DTarget) error {
 
-	L := glua.NewState()
-	defer L.Close()
+	L := lpool.Get().(*glua.LState)
+	defer lpool.Put(L)
 
-	luahelper.RegisterModule(L, http.HTTPModuleName, http.Loader)
-	luahelper.RegisterModule(L, tcp.TCPModName, tcp.Loader)
-	luahelper.RegisterModule(L, DetectModuleName, NewDetectLuaModule(dl, target).Loader)
+	fmt.Println(L)
+
+	luahelper.SetGlobalUserData(L, detectScriptUDName, dl)
+	luahelper.SetGlobalUserData(L, detectTargetUDName, target)
 
 	if err := luahelper.RunLua(L, dl.bcode); err != nil {
 
@@ -68,4 +89,5 @@ func (dl *DLuaScript) Run(target *DTarget) error {
 
 func (dl *DLuaScript) Publish(result *DResult) {
 
+	//fmt.Println(result)
 }

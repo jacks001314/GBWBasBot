@@ -6,11 +6,6 @@ import (
 	glua "github.com/yuin/gopher-lua"
 )
 
-type DetectLuaModule struct {
-	script  *DLuaScript
-	dtarget *DTarget
-}
-
 var detectApis = map[string]glua.LGFunction{
 	newDetectResultMethod: newDetectResultApi,
 }
@@ -20,23 +15,11 @@ var detectScriptApis = map[string]glua.LGFunction{
 	publishDetectResultMethod: publishApi,
 }
 
-func NewDetectLuaModule(script *DLuaScript, dtarget *DTarget) *DetectLuaModule {
-
-	return &DetectLuaModule{
-		script:  script,
-		dtarget: dtarget,
-	}
-
-}
-
-func (dlm *DetectLuaModule) Loader(L *glua.LState) int {
+func Loader(L *glua.LState) int {
 
 	mod := L.SetFuncs(L.NewTable(), detectApis)
 
 	luahelper.RegisterApis(L, mod, dresultApis, detectResultApiName, detectResultUDName)
-
-	luahelper.RegisterUserData(L, mod, detectScriptUDName, dlm.script, detectScriptApis)
-	luahelper.RegisterUserData(L, mod, detectTargetUDName, dlm.dtarget, dtargetApis)
 
 	L.Push(mod)
 
