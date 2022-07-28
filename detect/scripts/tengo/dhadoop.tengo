@@ -1,0 +1,74 @@
+/*
+* This findhadoop.tengo is an script used to find hadoop ipc
+*
+*global variable:
+*target
+*script
+*/
+
+fmt  := import("fmt")
+http := import("http")
+json := import("json")
+text := import("text")
+detect := import("detect")
+
+UA := "FindHadoopApplication"
+timeoutMS := 10000
+
+host := target.ip()
+port := target.port()
+key := "Hadoop IPC port"
+
+fetchResponse := func(isSSL) {
+
+    client := http.newHttpClient(host,port,isSSL,timeoutMS)
+    request := http.newHttpRequest("get","/").addHeader("User-Agent",UA)
+    response := client.send(request)
+
+    content := response.getBodyAsString()
+
+    return content
+}
+
+isMatch := func(content) {
+
+    return text.contains(content,key)
+}
+
+pub := func(isSSL) {
+
+    r := detect.newDetectResult()
+    r.ip(host)
+    r.port(port)
+    r.app("hadoop")
+    r.version("")
+    r.proto(isSSL?"https":"http")
+    r.isSSL(isSSL)
+
+    script.publish(r)
+}
+
+main := func() {
+
+    content := fetchResponse(false)
+
+    if isMatch(content) {
+        pub(false)
+        return true
+    }
+
+    content = fetchResponse(true)
+
+    if isMatch(content) {
+         pub(true)
+         return true
+     }
+
+     return false
+}
+
+main()
+
+
+
+

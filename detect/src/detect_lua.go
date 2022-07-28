@@ -36,7 +36,7 @@ type DLuaScript struct {
 }
 
 //从内存加载编译lua探测脚本
-func LoadLuaScriptFromContent(content []byte, key string) (*DLuaScript, error) {
+func LoadLuaScriptFromContent(task *DTask, content []byte, key string) (*DLuaScript, error) {
 
 	bcode, err := luahelper.CompileLuaScript(content, key)
 
@@ -48,11 +48,12 @@ func LoadLuaScriptFromContent(content []byte, key string) (*DLuaScript, error) {
 	return &DLuaScript{
 		Key:   key,
 		bcode: bcode,
+		task:  task,
 	}, nil
 }
 
 //从本地文件系统加载并编译lua探测脚本
-func LoadLuaScriptFromFile(fpath string, key string) (*DLuaScript, error) {
+func LoadLuaScriptFromFile(task *DTask, fpath string, key string) (*DLuaScript, error) {
 
 	bcode, err := luahelper.CompileLuaScriptFromFile(fpath)
 
@@ -64,6 +65,7 @@ func LoadLuaScriptFromFile(fpath string, key string) (*DLuaScript, error) {
 	return &DLuaScript{
 		Key:   key,
 		bcode: bcode,
+		task:  task,
 	}, nil
 
 }
@@ -89,5 +91,6 @@ func (dl *DLuaScript) Run(target *DTarget) error {
 
 func (dl *DLuaScript) Publish(result *DResult) {
 
-	//fmt.Println(result)
+	dl.task.Publish(result)
+
 }

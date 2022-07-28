@@ -3,6 +3,7 @@ package detect
 import (
 	stengo "common/scripts/tengo"
 	"errors"
+	"fmt"
 
 	"github.com/d5/tengo/objects"
 	"github.com/d5/tengo/v2"
@@ -96,11 +97,12 @@ func (m *DetectTargetMethod) dtPort(args ...objects.Object) (objects.Object, err
 			}
 		}
 
-		m.dtTengo.dt.Port = uint16(v)
+		m.dtTengo.dt.Port = v
 
 		return m.dtTengo, nil
 	}
 
+	fmt.Println(m.dtTengo.dt.Port)
 	return objects.FromInterface(m.dtTengo.dt.Port)
 }
 

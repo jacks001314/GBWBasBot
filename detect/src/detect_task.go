@@ -6,15 +6,19 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/panjf2000/ants/v2"
 )
 
 const (
-	defaultThreads = 100
+	defaultThreads        = 100
+	defaultMaxWaitThreads = 100
+	defaultThreadTimeout  = 60
 )
 
 type ScriptType int
@@ -41,20 +45,28 @@ type DetectThreadContext struct {
 	target *DTarget
 }
 
-func NewDetectTask(threads int, targets chan *DTarget, results chan *DResult) (*DTask, error) {
+func getValue(v, d int) int {
 
-	if threads <= 0 {
+	if v <= 0 {
 
-		threads = defaultThreads
+		return d
 	}
 
-	tpool, err := ants.NewPoolWithFunc(threads, func(ctx interface{}) {
+	return v
+}
+
+func NewDetectTask(threads, maxWaitThreads, threadTimeout int, targets chan *DTarget, results chan *DResult) (*DTask, error) {
+
+	tpool, err := ants.NewPoolWithFunc(getValue(threads, defaultThreads), func(ctx interface{}) {
 
 		dctx := ctx.(*DetectThreadContext)
 
 		dctx.dt.Run(dctx.target)
 
-	})
+	},
+		ants.WithNonblocking(false),
+		ants.WithMaxBlockingTasks(getValue(maxWaitThreads, defaultMaxWaitThreads)),
+		ants.WithExpiryDuration(time.Duration(getValue(threadTimeout, defaultThreadTimeout))*time.Second))
 
 	if err != nil {
 
@@ -72,6 +84,58 @@ func NewDetectTask(threads int, targets chan *DTarget, results chan *DResult) (*
 }
 
 func (d *DTask) Start() {
+
+	go func() {
+
+		defer func() {
+
+			if p := recover(); p != nil {
+
+				var buf [4096]byte
+				n := runtime.Stack(buf[:], false)
+
+				log.Errorf("Detect Task Exit from panic:%s", string(buf[:n]))
+			}
+		}()
+
+		for {
+
+			select {
+
+			case target := <-d.targets:
+
+				d.runDetect(target)
+			}
+		}
+	}()
+}
+
+func (d *DTask) runDetect(target *DTarget) {
+
+	d.scripts.Range(func(k interface{}, v interface{}) bool {
+
+		dt := v.(Detect)
+
+		dctx := &DetectThreadContext{
+			dt:     dt,
+			target: target,
+		}
+
+		for {
+
+			if err := d.threadsPool.Invoke(dctx); err != nil {
+
+				//wait more detect job ,sleep 1 second and again
+				log.Warnf("Too many detect job to wait sleep 1 time again,info:%v", err)
+				time.Sleep(time.Second)
+				continue
+			}
+
+			break
+		}
+
+		return true
+	})
 
 }
 
@@ -104,14 +168,14 @@ func (d *DTask) createScript(stype ScriptType, key string, content []byte) (err 
 
 	case ScriptLua:
 
-		if dt, err = LoadLuaScriptFromContent(content, key); err != nil {
+		if dt, err = LoadLuaScriptFromContent(d, content, key); err != nil {
 
 			return
 		}
 
 	case ScriptTengo:
 
-		if dt, err = LoadTengoScriptFromContent(content, key); err != nil {
+		if dt, err = LoadTengoScriptFromContent(d, content, key); err != nil {
 
 			return
 		}

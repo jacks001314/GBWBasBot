@@ -1,0 +1,98 @@
+
+/*
+*This Tengo Script Download Apache-Hadoop-Yarn data from fofa.so
+**/
+
+fmt  := import("fmt")
+http := import("http")
+source := import("source")
+json := import("json")
+text := import("text")
+
+host:= "fofa.so"
+port:= 443
+isSSL:= true
+timeOut:=10000
+email := "om2bg0vujgyjoiuy7jnmng5avayc@open_wechat"
+key := "ef7686fe6d2a8f2b7e311b6a3cfdafbe"
+//qbase64 := "YXBwPSJBcGFjaGUtRmxpbmsi"
+qbase64 := "YXBwPSJBUEFDSEUtaGFkb29wLVlBUk4i"
+defaultProto := "http"
+defaultApp := "Apache-Hadoop-Yarn"
+
+client := http.newHttpClient(host,port,isSSL,10000)
+
+fetch := func (page,size){
+
+    url := fmt.sprintf("/api/v1/search/all?email=%s&key=%s&qbase64=%s&page=%d&size=%d",email,key,qbase64,page,size)
+    request := http.newHttpRequest("get",url).addHeader("User-Agent","GOClient")
+    res := client.send(request)
+
+    return json.decode(res.getBodyAsByte())
+
+}
+
+parseData := func (data) {
+
+    if text.has_prefix(data[0],"https://") {
+        return ["https",data[1],text.parse_int(data[2],10,32)]
+    }else {
+        return [defaultProto,data[1],text.parse_int(data[2],10,32)]
+    }
+}
+
+setEntry := func (pdata) {
+
+     entry := source.newEntry()
+     entry.setIP(pdata[1])
+     entry.setHost(pdata[1])
+     entry.setPort(pdata[2])
+     entry.setProto(pdata[0])
+     entry.setApp(defaultApp)
+
+     scriptSource.put(entry)
+
+}
+
+setSource := func (results) {
+
+    for data in results {
+
+        if len(data)==3 {
+
+            pdata := parseData(data)
+            setEntry(pdata)
+        }
+    }
+}
+
+
+main := func () {
+
+    page := 1
+
+    for {
+
+        fmt.println(page)
+        jsonData := fetch(page,100)
+
+        if jsonData["error"] {
+            fmt.println(jsonData)
+            break
+        }
+
+        results := jsonData["results"]
+
+        if len(results) == 0 {
+            break
+        }
+
+        setSource(results)
+        page = page+1
+    }
+}
+
+main()
+
+
+

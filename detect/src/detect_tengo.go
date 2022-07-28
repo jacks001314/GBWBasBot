@@ -3,21 +3,38 @@ package detect
 import (
 	"common/proto/http"
 	"common/proto/tcp"
-	"common/scripts/tengo"
+	stengo "common/scripts/tengo"
+	"errors"
 	"io/ioutil"
+
+	"github.com/d5/tengo/v2"
 
 	"github.com/d5/tengo/objects"
 	"github.com/d5/tengo/script"
 	"github.com/d5/tengo/stdlib"
 )
 
+var dtsMethodMaps = map[string]*DetectTengoScriptMethod{
+
+	publishDetectResultMethod: &DetectTengoScriptMethod{
+		TengoObj: stengo.TengoObj{Name: publishDetectResultMethod},
+	},
+}
+
 type DetectTengoScript struct {
-	stengo tengo.TengoObj
+	stengo.TengoObj
+
+	task *DTask
 
 	Key string
 
 	/*tengo script instanse Compiled*/
 	detectTengo *script.Compiled
+}
+
+type DetectTengoScriptMethod struct {
+	stengo.TengoObj
+	scriptTengo *DetectTengoScript
 }
 
 /*compile tengo script*/
@@ -45,7 +62,7 @@ func scriptCompile(sdata []byte) (*script.Compiled, error) {
 	return script.Compile()
 }
 
-func LoadTengoScriptFromContent(data []byte, key string) (*DetectTengoScript, error) {
+func LoadTengoScriptFromContent(task *DTask, data []byte, key string) (*DetectTengoScript, error) {
 
 	com, err := scriptCompile(data)
 
@@ -55,14 +72,15 @@ func LoadTengoScriptFromContent(data []byte, key string) (*DetectTengoScript, er
 	}
 
 	return &DetectTengoScript{
-		stengo:      tengo.TengoObj{Name: key},
+		TengoObj:    stengo.TengoObj{Name: key},
 		Key:         key,
 		detectTengo: com,
+		task:        task,
 	}, nil
 
 }
 
-func LoadTengoScriptFromFile(fpath, key string) (*DetectTengoScript, error) {
+func LoadTengoScriptFromFile(task *DTask, fpath, key string) (*DetectTengoScript, error) {
 
 	data, err := ioutil.ReadFile(fpath)
 
@@ -70,7 +88,7 @@ func LoadTengoScriptFromFile(fpath, key string) (*DetectTengoScript, error) {
 		return nil, err
 	}
 
-	return LoadTengoScriptFromContent(data, key)
+	return LoadTengoScriptFromContent(task, data, key)
 
 }
 
@@ -94,4 +112,44 @@ func (dt *DetectTengoScript) Run(target *DTarget) error {
 
 func (dt *DetectTengoScript) Publish(result *DResult) {
 
+	dt.task.Publish(result)
+
+}
+
+func (dt *DetectTengoScript) IndexGet(index objects.Object) (value objects.Object, err error) {
+
+	key, ok := objects.ToString(index)
+
+	if !ok {
+		return nil, tengo.ErrInvalidArgumentType{
+			Name:     "index",
+			Expected: "string(compatible)",
+			Found:    index.TypeName(),
+		}
+	}
+
+	if m, ok := dtsMethodMaps[key]; ok {
+
+		m.scriptTengo = dt
+
+		return m, nil
+	}
+
+	return nil, errors.New("Undefine detect script function:" + key)
+
+}
+
+func (m *DetectTengoScriptMethod) Call(args ...objects.Object) (objects.Object, error) {
+
+	switch m.Name {
+
+	case publishDetectResultMethod:
+		dr := args[0].(*DetectResultTengo)
+		m.scriptTengo.Publish(dr.dr)
+		return nil, nil
+
+	default:
+		return nil, errors.New("unknown detect script method:" + m.Name)
+
+	}
 }

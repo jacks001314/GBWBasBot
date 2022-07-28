@@ -45,7 +45,7 @@ func dtargetPort(L *glua.LState) int {
 	if L.GetTop() == 2 {
 
 		v := L.CheckInt(2)
-		dt.Port = uint16(v)
+		dt.Port = v
 		return 0
 	}
 

