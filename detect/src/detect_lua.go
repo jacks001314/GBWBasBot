@@ -4,7 +4,6 @@ import (
 	"common/proto/http"
 	"common/proto/tcp"
 	luahelper "common/scripts/lua"
-	"fmt"
 	"sync"
 
 	glua "github.com/yuin/gopher-lua"
@@ -75,8 +74,6 @@ func (dl *DLuaScript) Run(target *DTarget) error {
 
 	L := lpool.Get().(*glua.LState)
 	defer lpool.Put(L)
-
-	fmt.Println(L)
 
 	luahelper.SetGlobalUserData(L, detectScriptUDName, dl)
 	luahelper.SetGlobalUserData(L, detectTargetUDName, target)

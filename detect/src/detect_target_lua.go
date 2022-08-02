@@ -6,8 +6,8 @@ import (
 
 var dtargetApis = map[string]glua.LGFunction{
 
-	"ip":   dtargetIP,
-	"port": dtargetPort,
+	dtargetIPMethod:   dtargetIP,
+	dtargetPortMethod: dtargetPort,
 }
 
 func checkDTarget(L *glua.LState, n int) *DTarget {
