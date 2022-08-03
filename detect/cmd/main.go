@@ -1,6 +1,7 @@
 package main
 
 import (
+	"common/scripts"
 	"common/util/fileutils"
 	"common/util/jsonutils"
 	detect "detect/src"
@@ -95,12 +96,12 @@ func main() {
 	}
 
 	extName := ".lua"
-	sstype := detect.ScriptLua
+	sstype := scripts.ScriptLua
 
 	if *stype == "tengo" {
 
 		extName = ".tengo"
-		sstype = detect.ScriptTengo
+		sstype = scripts.ScriptTengo
 	}
 
 	dtask, err := detect.NewDetectTask(*threads, *waitnum, *cleanTimeout, targetsCh, resultsCh)

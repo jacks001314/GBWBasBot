@@ -1,6 +1,7 @@
 package detect
 
 import (
+	"common/scripts"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -19,13 +20,6 @@ const (
 	defaultThreads        = 100
 	defaultMaxWaitThreads = 100
 	defaultThreadTimeout  = 60
-)
-
-type ScriptType int
-
-const (
-	ScriptLua ScriptType = iota + 1
-	ScriptTengo
 )
 
 type DTask struct {
@@ -144,14 +138,14 @@ func (d *DTask) Stop() {
 	d.threadsPool.Release()
 }
 
-func getScriptTypeName(stype ScriptType) string {
+func getScriptTypeName(stype scripts.ScriptType) string {
 
 	switch stype {
 
-	case ScriptLua:
+	case scripts.ScriptLua:
 		return "lua"
 
-	case ScriptTengo:
+	case scripts.ScriptTengo:
 		return "tengo"
 
 	default:
@@ -160,20 +154,20 @@ func getScriptTypeName(stype ScriptType) string {
 
 }
 
-func (d *DTask) createScript(stype ScriptType, key string, content []byte) (err error) {
+func (d *DTask) createScript(stype scripts.ScriptType, key string, content []byte) (err error) {
 
 	var dt Detect
 
 	switch stype {
 
-	case ScriptLua:
+	case scripts.ScriptLua:
 
 		if dt, err = LoadLuaScriptFromContent(d, content, key); err != nil {
 
 			return
 		}
 
-	case ScriptTengo:
+	case scripts.ScriptTengo:
 
 		if dt, err = LoadTengoScriptFromContent(d, content, key); err != nil {
 
@@ -191,7 +185,7 @@ func (d *DTask) createScript(stype ScriptType, key string, content []byte) (err 
 	return nil
 }
 
-func (d *DTask) AddDetectScriptFromContent(stype ScriptType, key string, content []byte) (err error) {
+func (d *DTask) AddDetectScriptFromContent(stype scripts.ScriptType, key string, content []byte) (err error) {
 
 	if _, ok := d.scripts.Load(key); ok {
 		//existed
@@ -203,7 +197,7 @@ func (d *DTask) AddDetectScriptFromContent(stype ScriptType, key string, content
 	return d.createScript(stype, key, content)
 }
 
-func (d *DTask) AddDetectScriptFromFile(stype ScriptType, key string, fpath string) error {
+func (d *DTask) AddDetectScriptFromFile(stype scripts.ScriptType, key string, fpath string) error {
 
 	if _, ok := d.scripts.Load(key); ok {
 		//existed
@@ -222,7 +216,7 @@ func (d *DTask) AddDetectScriptFromFile(stype ScriptType, key string, fpath stri
 	return d.createScript(stype, key, content)
 }
 
-func (d *DTask) AddDetectScriptFromDir(stype ScriptType, fdir, extName string) {
+func (d *DTask) AddDetectScriptFromDir(stype scripts.ScriptType, fdir, extName string) {
 
 	var count uint32
 

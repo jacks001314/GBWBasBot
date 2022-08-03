@@ -6,6 +6,7 @@ import (
 	stengo "common/scripts/tengo"
 	"errors"
 	"io/ioutil"
+	"strings"
 
 	"github.com/d5/tengo/objects"
 	"github.com/d5/tengo/script"
@@ -88,6 +89,27 @@ func LoadTengoScriptFromFile(task *AttackTask, config *Config) (*AttackTengoScri
 	}
 
 	return LoadTengoScriptFromContent(task, data, config)
+}
+
+func (ats *AttackTengoScript) Accept(target *AttackTarget) bool {
+
+	atype := ats.config.Atype
+	app := ats.config.App
+
+	if target.Types != nil && len(target.Types) > 0 {
+
+		if _, ok := target.Types[atype]; !ok {
+
+			return false
+		}
+	}
+
+	if target.App != "" && !strings.EqualFold(target.App, app) {
+
+		return false
+	}
+
+	return true
 }
 
 func (ats *AttackTengoScript) Run(target *AttackTarget) error {
