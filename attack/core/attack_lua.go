@@ -20,7 +20,7 @@ var lpool = sync.Pool{
 		luahelper.RegisterModule(L, tcp.TCPModName, tcp.Loader)
 		luahelper.RegisterModule(L, AttackModuleName, Loader)
 		luahelper.RegisterGlobalType(L, attackScriptUDName, nil, attackScriptApis)
-		luahelper.RegisterGlobalType(L, attackTargetUDName, nil, attackTargetApis)
+		luahelper.RegisterGlobalType(L, attackTargetUDName, nil, AttackTargetApis)
 
 		return L
 	},

@@ -10,14 +10,8 @@ import (
 	"github.com/d5/tengo/v2"
 )
 
-const (
-	TengoMethodCurIP  = "curIP"
-	TengoMethodNextIP = "nextIP"
-)
-
 type IPV4Tengo struct {
 	stengo.TengoObj
-
 	ipgen *IPV4Generator
 }
 
@@ -129,17 +123,17 @@ func (ipt *IPV4Tengo) IndexGet(index objects.Object) (value objects.Object, err 
 
 	switch key {
 
-	case TengoMethodCurIP:
+	case ipv4GenCurIPMethod:
 
 		return &IPV4TengoMethod{
-			TengoObj: stengo.TengoObj{Name: TengoMethodCurIP},
+			TengoObj: stengo.TengoObj{Name: ipv4GenCurIPMethod},
 			ipt:      ipt,
 		}, nil
 
-	case TengoMethodNextIP:
+	case ipv4GenNextIPMethod:
 
 		return &IPV4TengoMethod{
-			TengoObj: stengo.TengoObj{Name: TengoMethodNextIP},
+			TengoObj: stengo.TengoObj{Name: ipv4GenNextIPMethod},
 			ipt:      ipt,
 		}, nil
 
@@ -182,10 +176,10 @@ func (iptm *IPV4TengoMethod) Call(args ...objects.Object) (objects.Object, error
 
 	switch iptm.Name {
 
-	case TengoMethodCurIP:
+	case ipv4GenCurIPMethod:
 		return iptm.getCurIP(args...)
 
-	case TengoMethodNextIP:
+	case ipv4GenNextIPMethod:
 		return iptm.getNextIP(args...)
 
 	default:
@@ -197,13 +191,13 @@ var moduleMap objects.Object = &objects.ImmutableMap{
 
 	Value: map[string]objects.Object{
 
-		"newIPGenFromFile": &objects.UserFunction{
-			Name:  "new_ipgen_fromfile",
+		newIPGenFromFile: &objects.UserFunction{
+			Name:  newIPGenFromFile,
 			Value: newTengoIPGenFromFile,
 		},
 
-		"newIPGenFromArray": &objects.UserFunction{
-			Name:  "new_ipgen_from_array",
+		newIPGenFromArray: &objects.UserFunction{
+			Name:  newIPGenFromArray,
 			Value: newTengoIPGenFromArray,
 		},
 	},
@@ -212,7 +206,7 @@ var moduleMap objects.Object = &objects.ImmutableMap{
 func (IPV4Tengo) Import(moduleName string) (interface{}, error) {
 
 	switch moduleName {
-	case "ip4gen":
+	case IPV4ModName:
 		return moduleMap, nil
 	default:
 		return nil, fmt.Errorf("undefined module %q", moduleName)

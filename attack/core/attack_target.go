@@ -17,3 +17,14 @@ type AttackTarget struct {
 
 	Types map[string]struct{} //攻击类型列表
 }
+
+func (at *AttackTarget) AddTypes(types []string) {
+
+	tmap := make(map[string]struct{}, len(types))
+
+	for _, t := range types {
+
+		tmap[t] = struct{}{}
+	}
+
+}

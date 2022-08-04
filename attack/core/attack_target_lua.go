@@ -2,7 +2,7 @@ package attack
 
 import glua "github.com/yuin/gopher-lua"
 
-var attackTargetApis = map[string]glua.LGFunction{
+var AttackTargetApis = map[string]glua.LGFunction{
 
 	attackTargetIPMethod:      attackTargetIP,
 	attackTargetPortMethod:    attackTargetPort,

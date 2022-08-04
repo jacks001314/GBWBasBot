@@ -14,26 +14,29 @@ UA := "GoClient"
 
 key := "{{.Key}}"
 query := http.urlEncode(`{{.Query}}`)
-useDefaultPort := {{.UseDefaultPort}}
+defaultPort := {{.Port}}
 
 client := http.newHttpClient(host,port,true,timeoutMS)
 
-setEntry := func (ip,port) {
 
-     entry := source.newEntry()
-     entry.setIP(ip)
-     entry.setHost(ip)
-     if useDefaultPort {
-        entry.setPort(0)
+putTarget := func (ip,port) {
 
+     target := source.newTarget()
+     target.ip(ip)
+     target.host(ip)
+     if port == 0 {
+        target.port(defaultPort)
      }else {
-        entry.setPort(port)
+        target.port(port)
      }
 
-     entry.setProto("{{.Proto}}")
-     entry.setApp("{{.App}}")
+     target.app("{{.App}}")
+     target.version("{{.Version}}")
+     target.proto("{{.Proto}}")
+     target.isSSL({{.IsSSL}})
 
-     scriptSource.put(entry)
+     script.put(target)
+
 }
 
 //parse fetch json data
@@ -48,7 +51,7 @@ parseData := func(content) {
 
      for entry in jsonData["matches"] {
 
-        setEntry(entry["ip"],entry["portinfo"]["port"])
+        putTarget(entry["ip"],entry["portinfo"]["port"])
         count++
      }
 
@@ -63,7 +66,9 @@ fetchData := func() {
     for {
 
         url := fmt.sprintf("/host/search?query=%s&page=%d",query,page)
-        request := http.newHttpRequest("get",url).addHeader("User-Agent",UA).addHeader("API-KEY",key)
+        request := http.newHttpRequest("get",url)
+        request.addHeader("User-Agent",UA)
+        request.addHeader("API-KEY",key)
 
         response := client.send(request)
 
@@ -72,6 +77,7 @@ fetchData := func() {
          }
 
          content := response.getBodyAsString()
+
          if content == "" {
                 break
          }

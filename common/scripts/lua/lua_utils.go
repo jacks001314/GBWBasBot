@@ -88,6 +88,25 @@ func RegisterGlobalType(L *glua.LState, name string, userdata interface{},
 
 }
 
+func RegisterGlobalTypeWithUserData(L *glua.LState, name string, userdata interface{},
+	apis map[string]glua.LGFunction) {
+
+	ud := GetGlobalUserData(L, name)
+
+	if ud == glua.LNil {
+
+		mt := L.NewTypeMetatable(name)
+		// methods
+		L.SetField(mt, MTIndexName, L.SetFuncs(L.NewTable(), apis))
+		ud = L.NewUserData()
+
+		L.SetMetatable(ud, mt)
+		L.SetGlobal(name, ud)
+	}
+
+	ud.Value = userdata
+}
+
 func LuaTableToStringArray(t *glua.LTable) []string {
 
 	arr := make([]string, 0)

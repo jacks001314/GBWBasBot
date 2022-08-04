@@ -114,7 +114,7 @@ func (ats *AttackTengoScript) Accept(target *AttackTarget) bool {
 
 func (ats *AttackTengoScript) Run(target *AttackTarget) error {
 
-	att := newAttackTargetTengo(target)
+	att := NewAttackTargetTengo(target)
 
 	ts := ats.attackTengo.Clone()
 

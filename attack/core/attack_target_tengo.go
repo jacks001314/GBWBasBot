@@ -93,12 +93,17 @@ type AttackTargetMethod struct {
 	getFunc func(m *AttackTargetMethod) interface{}
 }
 
-func newAttackTargetTengo(at *AttackTarget) *AttackTargetTengo {
+func NewAttackTargetTengo(at *AttackTarget) *AttackTargetTengo {
 
 	return &AttackTargetTengo{
 		TengoObj: stengo.TengoObj{Name: attackTargetUDName},
 		at:       at,
 	}
+}
+
+func (att *AttackTargetTengo) GetAttackTarget() *AttackTarget {
+
+	return att.at
 }
 
 func (att *AttackTargetTengo) IndexGet(index objects.Object) (value objects.Object, err error) {

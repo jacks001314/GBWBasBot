@@ -1,22 +1,25 @@
 fmt  := import("fmt")
 source := import("source")
-ipgen := import("ipgen")
+ipv4 := import("ipv4")
 
-wlists := {{tostring .WhiteLists}}
-blists  := {{tostring .BlackLists}}
+wlists := {{toTStrArray .WhiteLists}}
+blists  := {{toTStrArray .BlackLists}}
 
-ipg := ipgen.newIPGenFromArray(wlists,blists)
+ipg := ipv4.newFromArray(wlists,blists)
 
-setEntry := func (ip) {
 
-     entry := source.newEntry()
-     entry.setIP(ip)
-     entry.setHost(ip)
-     entry.setPort(0)
-     entry.setProto("{{.Proto}}")
-     entry.setApp("{{.App}}")
+putTarget := func (ip) {
 
-     scriptSource.put(entry)
+     target := source.newTarget()
+     target.ip(ip)
+     target.host(ip)
+     target.port({{.Port}})
+     target.app("{{.App}}")
+     target.version("{{.Version}}")
+     target.proto("{{.Proto}}")
+     target.isSSL({{.IsSSL}})
+
+     script.put(target)
 
 }
 
@@ -24,7 +27,7 @@ main := func () {
 
     for ip:= ipg.curIP();ip!="";ip= ipg.nextIP() {
 
-        setEntry(ip)
+        putTarget(ip)
     }
 }
 
