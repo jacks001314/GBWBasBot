@@ -25,7 +25,7 @@ func run(stype scripts.ScriptType, tfile string, gensf bool, data *target.Attack
 
 	if gensf {
 
-		fmt.Println(content)
+		fmt.Println(string(content))
 		return
 	}
 
@@ -55,7 +55,6 @@ func run(stype scripts.ScriptType, tfile string, gensf bool, data *target.Attack
 
 	}()
 
-	count := 0
 	go func() {
 		defer func() {
 
@@ -75,7 +74,6 @@ func run(stype scripts.ScriptType, tfile string, gensf bool, data *target.Attack
 			case t := <-tchan:
 				fmt.Println(jsonutils.ToJsonString(t, true))
 				//time.Sleep(2 * time.Second)
-				count++
 
 			}
 		}
