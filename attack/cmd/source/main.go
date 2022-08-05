@@ -7,7 +7,9 @@ import (
 	"common/util/jsonutils"
 	tplutils "common/util/tpl"
 	"flag"
+	"fmt"
 	"log"
+	"runtime"
 	"strings"
 	"sync"
 )
@@ -23,7 +25,7 @@ func run(stype scripts.ScriptType, tfile string, gensf bool, data *target.Attack
 
 	if gensf {
 
-		log.Println(content)
+		fmt.Println(content)
 		return
 	}
 
@@ -36,8 +38,6 @@ func run(stype scripts.ScriptType, tfile string, gensf bool, data *target.Attack
 		log.Fatal(err)
 	}
 
-	exitChan := make(chan struct{})
-
 	wg := sync.WaitGroup{}
 
 	wg.Add(2)
@@ -46,7 +46,6 @@ func run(stype scripts.ScriptType, tfile string, gensf bool, data *target.Attack
 
 		defer func() {
 			wg.Done()
-			exitChan <- struct{}{}
 		}()
 
 		err := stask.Fetch(stype, content, []string{"target"})
@@ -58,17 +57,26 @@ func run(stype scripts.ScriptType, tfile string, gensf bool, data *target.Attack
 
 	count := 0
 	go func() {
+		defer func() {
+
+			if p := recover(); p != nil {
+
+				var buf [4096]byte
+				n := runtime.Stack(buf[:], false)
+
+				log.Printf("Attack Source Exit from panic:%s", string(buf[:n]))
+			}
+
+			wg.Done()
+		}()
+
 		for {
 			select {
 			case t := <-tchan:
-				log.Println(jsonutils.ToJsonString(t, true))
+				fmt.Println(jsonutils.ToJsonString(t, true))
 				//time.Sleep(2 * time.Second)
 				count++
 
-			case <-exitChan:
-				log.Printf("Gennerate attack targets count:%d%n", count)
-				wg.Done()
-				return
 			}
 		}
 	}()
