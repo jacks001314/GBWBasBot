@@ -14,26 +14,28 @@ UA := "GoClient"
 
 key := "{{.Key}}"
 query := http.urlEncode(`{{.Query}}`)
-useDefaultPort := {{.UseDefaultPort}}
+defaultPort := {{.Port}}
 
 client := http.newHttpClient(host,port,true,timeoutMS)
 
-setEntry := func (ip,port) {
+putTarget := func (ip,port) {
 
-     entry := source.newEntry()
-     entry.setIP(ip)
-     entry.setHost(ip)
-     if useDefaultPort {
-        entry.setPort(0)
-
+     target := source.newTarget()
+     target.ip(ip)
+     target.host(ip)
+     if port == 0 {
+        target.port(defaultPort)
      }else {
-        entry.setPort(port)
+        target.port(port)
      }
 
-     entry.setProto("{{.Proto}}")
-     entry.setApp("{{.App}}")
+     target.app("{{.App}}")
+     target.version("{{.Version}}")
+     target.proto("{{.Proto}}")
+     target.isSSL({{.IsSSL}})
 
-     scriptSource.put(entry)
+     script.put(target)
+
 }
 
 //parse fetch json data
@@ -48,7 +50,7 @@ parseData := func(content) {
 
      for entry in jsonData["matches"] {
 
-        setEntry(entry["ip_str"],entry["port"])
+        putTarget(entry["ip_str"],entry["port"])
         count++
      }
 
@@ -56,14 +58,15 @@ parseData := func(content) {
 }
 
 //get host data from shodan by restfull api
-fetchData := func() {
+main := func() {
 
     page := 1
 
     for {
 
         url := fmt.sprintf("/shodan/host/search?key=%s&query=%s&page=%d",key,query,page)
-        request := http.newHttpRequest("get",url).addHeader("User-Agent",UA)
+        request := http.newHttpRequest("get",url)
+        request.addHeader("User-Agent",UA)
 
         response := client.send(request)
 
@@ -82,10 +85,6 @@ fetchData := func() {
          page++
     }
 
-}
-
-main := func () {
-    fetchData()
 }
 
 main()

@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="767e72c5-2012-4601-89a7-eea4a8d57c4d" name="Default Changelist" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="NewLua" />
+        <option value="Go File" />
+      </list>
+    </option>
+  </component>
+  <component name="GOROOT" path="C:/Program Files/Go" />
+  <component name="GoLibraries">
+    <option name="indexEntireGoPath" value="false" />
+  </component>
+  <component name="ProjectId" id="2CHUGxDCBBE0SHsRkWUo34Ub2hi" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="DefaultGoTemplateProperty" value="Go File" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="aspect.path.notification.shown" value="true" />
+    <property name="go.import.settings.migrated" value="true" />
+    <property name="go.tried.to.enable.integration.vgo.integrator" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="settings.editor.selected.configurable" value="go.vgo" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\shajf_dev\self\GBWBasBot\common\scripts\lua" />
+      <recent name="D:\shajf_dev\self\GBWBasBot\attack\target" />
+      <recent name="D:\shajf_dev\self\GBWBasBot\attack\scripts\target" />
+      <recent name="D:\shajf_dev\self\GBWBasBot\attack\scripts\target\tengo" />
+      <recent name="D:\shajf_dev\self\GBWBasBot\source\scripts\tengo" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\shajf_dev\self\GBWBasBot\common\proto\hadoop" />
+      <recent name="D:\shajf_dev\self\GBWBasBot\attack\scripts\attack\tengo" />
+      <recent name="D:\shajf_dev\self\GBWBasBot\attack\scripts\target\tengo" />
+      <recent name="D:\shajf_dev\self\GBWBasBot\detect\test" />
+      <recent name="D:\shajf_dev\self\GBWBasBot\detect\src" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Go Build.go build main.go">
+    <configuration default="true" type="GoApplicationRunConfiguration" factoryName="Go Application">
+      <module name="GBWBasBot" />
+      <working_directory value="$PROJECT_DIR$/" />
+      <go_parameters value="-i" />
+      <kind value="FILE" />
+      <filePath value="$PROJECT_DIR$/" />
+      <directory value="$PROJECT_DIR$/" />
+      <method v="2" />
+    </configuration>
+    <configuration name="go build main.go" type="GoApplicationRunConfiguration" factoryName="Go Application" temporary="true" nameIsGenerated="true">
+      <module name="attack" />
+      <working_directory value="$PROJECT_DIR$/attack" />
+      <kind value="FILE" />
+      <filePath value="$PROJECT_DIR$/attack/cmd/main.go" />
+      <directory value="$PROJECT_DIR$/" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="GoTestRunConfiguration" factoryName="Go Test">
+      <module name="GBWBasBot" />
+      <working_directory value="$PROJECT_DIR$/" />
+      <go_parameters value="-i" />
+      <framework value="gotest" />
+      <kind value="DIRECTORY" />
+      <directory value="$PROJECT_DIR$/" />
+      <filePath value="$PROJECT_DIR$/" />
+      <method v="2" />
+    </configuration>
+    <configuration name="t.ps1 (3)" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/common/test/t.ps1" workingDirectory="C:\Users\jacks">
+      <method v="2" />
+    </configuration>
+    <configuration name="t.ps1 (4)" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/common/test/t.ps1" workingDirectory="C:\Users\jacks">
+      <method v="2" />
+    </configuration>
+    <configuration name="t.ps1 (5)" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/common/test/t.ps1" workingDirectory="C:\Users\jacks">
+      <method v="2" />
+    </configuration>
+    <configuration name="t.ps1" type="PowerShellRunType" factoryName="PowerShell" temporary="true" scriptUrl="$PROJECT_DIR$/common/test/t.ps1" workingDirectory="C:\Users\jacks">
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Go Build.go build main.go" />
+        <item itemvalue="PowerShell.t.ps1" />
+        <item itemvalue="PowerShell.t.ps1 (5)" />
+        <item itemvalue="PowerShell.t.ps1 (4)" />
+        <item itemvalue="PowerShell.t.ps1 (3)" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="767e72c5-2012-4601-89a7-eea4a8d57c4d" name="Default Changelist" comment="" />
+      <created>1658458911905</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1658458911905</updated>
+      <workItem from="1658458913033" duration="11176000" />
+      <workItem from="1658713147170" duration="37136000" />
+      <workItem from="1658899017551" duration="34722000" />
+      <workItem from="1658994889396" duration="2793000" />
+      <workItem from="1658998055190" duration="2526000" />
+      <workItem from="1659057775430" duration="1797000" />
+      <workItem from="1659318981350" duration="89277000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="VgoProject">
+    <integration-enabled>true</integration-enabled>
+    <proxy>https://goproxy.cn</proxy>
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="552" y="174" key="#GOROOT" timestamp="1658458932498">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state x="552" y="174" key="#GOROOT/0.0.1920.1032@0.0.1920.1032" timestamp="1658458932498" />
+    <state x="552" y="174" key="#Go_Modules_(vgo)" timestamp="1658458942475">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state x="552" y="174" key="#Go_Modules_(vgo)/0.0.1920.1032@0.0.1920.1032" timestamp="1658458942475" />
+    <state x="678" y="318" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1658982367241">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state x="678" y="318" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1920.1032@0.0.1920.1032" timestamp="1658982367241" />
+    <state x="668" y="224" key="#detect.lua" timestamp="1658901197239">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state x="668" y="224" key="#detect.lua/0.0.1920.1032@0.0.1920.1032" timestamp="1658901197239" />
+    <state x="668" y="249" key="#t.ps1_(2)" timestamp="1658999041590">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state x="668" y="249" key="#t.ps1_(2)/0.0.1920.1032@0.0.1920.1032" timestamp="1658999041590" />
+    <state x="615" y="292" key="EditFileWatcherDialog" timestamp="1658458965870">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state x="615" y="292" key="EditFileWatcherDialog/0.0.1920.1032@0.0.1920.1032" timestamp="1658458965870" />
+    <state x="740" y="271" key="FileChooserDialogImpl" timestamp="1658995562975">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state x="740" y="271" key="FileChooserDialogImpl/0.0.1920.1032@0.0.1920.1032" timestamp="1658995562975" />
+    <state width="1877" height="611" key="GridCell.Tab.0.bottom" timestamp="1659680814495">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state width="1877" height="611" key="GridCell.Tab.0.bottom/0.0.1920.1032@0.0.1920.1032" timestamp="1659680814495" />
+    <state width="1877" height="611" key="GridCell.Tab.0.center" timestamp="1659680814495">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state width="1877" height="611" key="GridCell.Tab.0.center/0.0.1920.1032@0.0.1920.1032" timestamp="1659680814495" />
+    <state width="1877" height="611" key="GridCell.Tab.0.left" timestamp="1659680814495">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state width="1877" height="611" key="GridCell.Tab.0.left/0.0.1920.1032@0.0.1920.1032" timestamp="1659680814495" />
+    <state width="1877" height="611" key="GridCell.Tab.0.right" timestamp="1659680814495">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state width="1877" height="611" key="GridCell.Tab.0.right/0.0.1920.1032@0.0.1920.1032" timestamp="1659680814495" />
+    <state width="1877" height="344" key="GridCell.Tab.1.bottom" timestamp="1659598048376">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state width="1877" height="344" key="GridCell.Tab.1.bottom/0.0.1920.1032@0.0.1920.1032" timestamp="1659598048376" />
+    <state width="1877" height="344" key="GridCell.Tab.1.center" timestamp="1659598048376">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state width="1877" height="344" key="GridCell.Tab.1.center/0.0.1920.1032@0.0.1920.1032" timestamp="1659598048376" />
+    <state width="1877" height="344" key="GridCell.Tab.1.left" timestamp="1659598048376">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state width="1877" height="344" key="GridCell.Tab.1.left/0.0.1920.1032@0.0.1920.1032" timestamp="1659598048376" />
+    <state width="1877" height="344" key="GridCell.Tab.1.right" timestamp="1659598048376">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state width="1877" height="344" key="GridCell.Tab.1.right/0.0.1920.1032@0.0.1920.1032" timestamp="1659598048376" />
+    <state x="461" y="158" key="SettingsEditor" timestamp="1658993430701">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state x="461" y="158" key="SettingsEditor/0.0.1920.1032@0.0.1920.1032" timestamp="1658993430701" />
+    <state width="968" height="524" key="XDebugger.FullValuePopup" timestamp="1659597850790">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state width="968" height="524" key="XDebugger.FullValuePopup/0.0.1920.1032@0.0.1920.1032" timestamp="1659597850790" />
+    <state x="640" y="340" key="com.intellij.ide.util.TipDialog" timestamp="1659060246014">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state x="640" y="340" key="com.intellij.ide.util.TipDialog/0.0.1920.1032@0.0.1920.1032" timestamp="1659060246014" />
+    <state x="334" y="148" key="new project wizard" timestamp="1659502088368">
+      <screen x="0" y="0" width="1920" height="1032" />
+    </state>
+    <state x="334" y="148" key="new project wizard/0.0.1920.1032@0.0.1920.1032" timestamp="1659502088368" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/detect/src/detect_result_tengo.go</url>
+          <line>2</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/common/util/tpl/tplutils.go</url>
+          <line>47</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="DlvLineBreakpoint">
+          <url>file://$PROJECT_DIR$/attack/target/source_lua.go</url>
+          <line>2</line>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+    <watches-manager>
+      <configuration name="GoApplicationRunConfiguration">
+        <watch expression="*(*&quot;void&quot;)(824635196064)" />
+      </configuration>
+    </watches-manager>
+  </component>
+</project>

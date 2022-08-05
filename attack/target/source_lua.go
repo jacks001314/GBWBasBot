@@ -3,10 +3,13 @@ package target
 import (
 	attack "attack/core"
 	"common/ipgen/ipv4"
-	"common/json"
 	"common/proto/http"
 	"common/proto/tcp"
 	luahelper "common/scripts/lua"
+	"common/scripts/lua/base64"
+	json "common/scripts/lua/json"
+	"common/scripts/lua/strings"
+
 	"sync"
 
 	glua "github.com/yuin/gopher-lua"
@@ -22,6 +25,8 @@ var lpool = sync.Pool{
 		luahelper.RegisterModule(L, tcp.TCPModName, tcp.Loader)
 		luahelper.RegisterModule(L, ipv4.IPV4ModName, ipv4.Loader)
 		luahelper.RegisterModule(L, json.JsonModuleName, json.Loader)
+		luahelper.RegisterModule(L, base64.Base64ModuleName, base64.Loader)
+		luahelper.RegisterModule(L, strings.StringsModuleName, strings.Loader)
 		luahelper.RegisterModule(L, SourceModuleName, Loader)
 		luahelper.RegisterGlobalType(L, SourceUDName, nil, sourceScriptApis)
 

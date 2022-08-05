@@ -3,15 +3,22 @@ package tplutils
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"text/template"
 )
 
-func MakeSourceScriptFromTemplate(tplFile, fname string, data interface{}) ([]byte, error) {
+func MakeSourceScriptFromTemplate(tplFile string, data interface{}) ([]byte, error) {
 
 	contentBuffer := bytes.NewBuffer(make([]byte, 0))
 
-	tp := template.New(fname)
+	content, err := ioutil.ReadFile(tplFile)
+	if err != nil {
+
+		return nil, err
+	}
+
+	tp := template.New("template")
 
 	tp = tp.Funcs(template.FuncMap{
 		"toTStrArray": func(arr []string) string {
@@ -38,7 +45,7 @@ func MakeSourceScriptFromTemplate(tplFile, fname string, data interface{}) ([]by
 		},
 	})
 
-	tp, err := tp.ParseFiles(tplFile)
+	tp, err = tp.Parse(string(content))
 
 	if err != nil {
 		errS := fmt.Sprintf("Parse  Template file:%s ,err:[%v]", tplFile, err)

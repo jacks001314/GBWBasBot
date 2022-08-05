@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/GBWBasBot.iml" filepath="$PROJECT_DIR$/.idea/GBWBasBot.iml" />
+      <module fileurl="file://$PROJECT_DIR$/attack/attack.iml" filepath="$PROJECT_DIR$/attack/attack.iml" />
+      <module fileurl="file://$PROJECT_DIR$/detect/detect.iml" filepath="$PROJECT_DIR$/detect/detect.iml" />
+      <module fileurl="file://$PROJECT_DIR$/pscan/pscan.iml" filepath="$PROJECT_DIR$/pscan/pscan.iml" />
+    </modules>
+  </component>
+</project>

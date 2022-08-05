@@ -7,20 +7,6 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-// Loader is the module loader function.
-func Loader(L *lua.LState) int {
-
-	t := L.NewTable()
-	L.SetFuncs(t, api)
-	L.Push(t)
-	return 1
-}
-
-var api = map[string]lua.LGFunction{
-	decodeApi: apiDecode,
-	encodeApi: apiEncode,
-}
-
 func apiDecode(L *lua.LState) int {
 
 	str := L.CheckString(1)
