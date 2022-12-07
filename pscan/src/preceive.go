@@ -26,43 +26,51 @@ func (ps *PScan) Receive() {
 			}
 		}
 
-		if pdata, _, err := ps.handler.ReadPacketData(); err == nil {
+		pdata, _, err := ps.handler.ReadPacketData()
+		if err != nil {
+			continue
+		}
 
-			//read ok and parse packet data
-			// Parse the packet.  We'd use DecodingLayerParser here if we
-			// wanted to be really fast.
-			packet := gopacket.NewPacket(pdata, layers.LayerTypeEthernet, gopacket.NoCopy)
+		packet := gopacket.NewPacket(pdata, layers.LayerTypeEthernet, gopacket.NoCopy)
+		iplayer := packet.Layer(layers.LayerTypeIPv4)
+		if iplayer == nil {
+			continue
+		}
 
-			if ipLayer := packet.Layer(layers.LayerTypeIPv4); ipLayer != nil {
+		ipl, ok := iplayer.(*layers.IPv4)
+		if !ok {
+			continue
+		}
 
-				if ipl, ok := ipLayer.(*layers.IPv4); ok {
+		srcIP := netutils.IPStrToInt(ipl.DstIP.String())
+		dstIP := netutils.IPStrToInt(ipl.SrcIP.String())
 
-					srcIP := netutils.IPStrToInt(ipl.DstIP.String())
-					dstIP := netutils.IPStrToInt(ipl.SrcIP.String())
+		validator := GenValidator(srcIP, dstIP)
 
-					validator := GenValidator(srcIP, dstIP)
+		tcplayer := packet.Layer(layers.LayerTypeTCP)
+		if tcplayer == nil {
+			continue
+		}
 
-					if tcpLayer := packet.Layer(layers.LayerTypeTCP); tcpLayer != nil {
+		tcp, ok := tcplayer.(*layers.TCP)
+		if !ok {
+			continue
+		}
+		seq := validator.GetSequence()
+		ack := tcp.Ack
 
-						if tcp, ok := tcpLayer.(*layers.TCP); ok {
+		if validator.IsValidDstPort(uint32(tcp.DstPort)) && (ack == seq+1) {
 
-							seq := validator.GetSequence()
-							ack := tcp.Ack
-
-							if validator.IsValidDstPort(uint32(tcp.DstPort)) && (ack == seq+1) {
-
-								if tcp.SYN && tcp.ACK {
-									//find a live port
-									result := &PResult{IP: ipl.SrcIP.String(),
-										Port: uint32(tcp.SrcPort)}
-
-									ps.PushScanResult(result)
-								}
-							}
-						}
-					}
+			if tcp.SYN && tcp.ACK {
+				//find a live port
+				result := &PResult{
+					IP:   ipl.SrcIP.String(),
+					Port: uint32(tcp.SrcPort),
 				}
+
+				ps.PushScanResult(result)
 			}
 		}
+
 	} //for
 }
